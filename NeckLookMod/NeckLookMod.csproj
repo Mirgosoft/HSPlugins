@@ -66,7 +66,12 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="Assembly-CSharp.dll" />
+    <Content Include="IllusionPlugin.dll" />
     <Content Include="ILMergeOrder.txt" />
+    <Content Include="UIUtility.dll" />
+    <Content Include="UnityEngine.dll" />
+    <Content Include="UnityEngine.UI.dll" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>

@@ -1,4 +1,5 @@
 HSTesting/
+DOWNLOADS/*
 BetterClothingMenu/
 ExpressiveExpressions/
 FutaShortcut/
@@ -27,6 +28,7 @@ CardCategorizer/
 bld/
 [Bb]in/
 [Oo]bj/
+[Uu]nity[Ll]ibs
 
 # Visual Studio 2015 cache/options directory
 .vs/
@@ -246,3 +248,44 @@ ModelManifest.xml
 
 # FAKE - F# Make
 .fake/
+AutoModReload/Assembly-CSharp.dll
+AutoModReload/IllusionPlugin.dll
+AutoModReload/UnityEngine.dll
+BetterSceneLoader/Assembly-CSharp.dll
+BetterSceneLoader/IllusionInjector.dll
+BetterSceneLoader/IllusionPlugin.dll
+BetterSceneLoader/UIUtility.dll
+BetterSceneLoader/UnityEngine.dll
+BetterSceneLoader/UnityEngine.UI.dll
+HideUI/IllusionPlugin.dll
+HideUI/UnityEngine.dll
+HideUI/UnityEngine.UI.dll
+LightManager/Assembly-CSharp.dll
+LightManager/HSExtSave.dll
+LightManager/IllusionPlugin.dll
+LightManager/UnityEngine.dll
+LightManager/UnityEngine.UI.dll
+ModMenuManager/Assembly-CSharp.dll
+ModMenuManager/IllusionPlugin.dll
+ModMenuManager/UnityEngine.dll
+ModMenuManager/UnityEngine.UI.dll
+ModSettingsMenu/Assembly-CSharp.dll
+ModSettingsMenu/IllusionInjector.dll
+ModSettingsMenu/IllusionPlugin.dll
+ModSettingsMenu/UnityEngine.dll
+ModSettingsMenu/UnityEngine.UI.dll
+NeckLookMod/Assembly-CSharp.dll
+NeckLookMod/IllusionPlugin.dll
+NeckLookMod/UIUtility.dll
+NeckLookMod/UnityEngine.dll
+NeckLookMod/UnityEngine.UI.dll
+NeckSettings/Assembly-CSharp.dll
+NeckSettings/IllusionPlugin.dll
+NeckSettings/UnityEngine.dll
+TitleShortcuts/Assembly-CSharp.dll
+TitleShortcuts/IllusionPlugin.dll
+TitleShortcuts/UnityEngine.dll
+TogglePOV/Assembly-CSharp.dll
+TogglePOV/IllusionPlugin.dll
+TogglePOV/UnityEngine.dll
+TogglePOV/UnityEngine.UI.dll

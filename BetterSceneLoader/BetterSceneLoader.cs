@@ -25,9 +25,10 @@ namespace BetterSceneLoader
         float buttonSize = 10f;
         float marginSize = 5f;
         float headerSize = 20f;
-        float UIScale = 1.0f;
+        float UIScale = 1.4f;
         float scrollOffsetX = -15f;
-        float windowMargin = 130f;
+        float windowMarginX = 45f;
+        float windowMarginY = 35f;
 
         Color dragColor = new Color(0.4f, 0.4f, 0.4f, 1f);
         Color backgroundColor = new Color(1f, 1f, 1f, 1f);
@@ -39,6 +40,7 @@ namespace BetterSceneLoader
         ScrollRect imagelist;
         Image optionspanel;
         Image confirmpanel;
+        Text fileNameText;
         Button yesbutton;
         Button nobutton;
         Text nametext;
@@ -55,7 +57,7 @@ namespace BetterSceneLoader
 
         void Awake()
         {
-            UIUtility.Init();
+            UIUtility.Init("BetterSceneLoader");
             MakeBetterSceneLoader();
             LoadSettings();
             StartCoroutine(StartingScene());
@@ -105,9 +107,9 @@ namespace BetterSceneLoader
             if(mainPanel)
             {
                 if(smallWindow)
-                    mainPanel.transform.SetRect(0.5f, 0f, 1f, 1f, windowMargin, windowMargin, -windowMargin, -windowMargin);
+                    mainPanel.transform.SetRect(0.5f, 0f, 1f, 1f, windowMarginX, windowMarginY, -windowMarginX, -windowMarginY);
                 else
-                    mainPanel.transform.SetRect(0f, 0f, 1f, 1f, windowMargin, windowMargin, -windowMargin, -windowMargin); 
+                    mainPanel.transform.SetRect(0f, 0f, 1f, 1f, windowMarginX, windowMarginY, -windowMarginX, -windowMarginY); 
             }
         }
         
@@ -137,7 +139,7 @@ namespace BetterSceneLoader
             Utils.AddCloseSymbol(close);
             
             category = UIUtility.CreateDropdown("Dropdown", drag.transform, "Categories");
-            category.transform.SetRect(0f, 0f, 0f, 1f, 0f, 0f, 100f);
+            category.transform.SetRect(0f, 0f, 0f, 1f, 0f, 0f, 140f);
             category.captionText.transform.SetRect(0f, 0f, 1f, 1f, 0f, 2f, -15f, -2f);
             category.captionText.alignment = TextAnchor.MiddleCenter;
             category.options = GetCategories();
@@ -149,19 +151,27 @@ namespace BetterSceneLoader
             });
 
             var refresh = UIUtility.CreateButton("RefreshButton", drag.transform, "Refresh");
-            refresh.transform.SetRect(0f, 0f, 0f, 1f, 100f, 0f, 180f);
+            refresh.transform.SetRect(0f, 0f, 0f, 1f, 140f, 0f, 220f);
             refresh.onClick.AddListener(() => ReloadImages());
 
             var save = UIUtility.CreateButton("SaveButton", drag.transform, "Save");
-            save.transform.SetRect(0f, 0f, 0f, 1f, 180f, 0f, 260f);
+            save.transform.SetRect(0f, 0f, 0f, 1f, 220f, 0f, 300f, 20f);
             save.onClick.AddListener(() => SaveScene());
 
             var folder = UIUtility.CreateButton("FolderButton", drag.transform, "Folder");
-            folder.transform.SetRect(0f, 0f, 0f, 1f, 260f, 0f, 340f);
-            folder.onClick.AddListener(() => Process.Start(scenePath));
+            folder.transform.SetRect(0f, 0f, 0f, 1f, 300f, 0f, 380f);
+            folder.onClick.AddListener(() => openFolder());
+            
+            var oneColumn = UIUtility.CreateButton("oneColumn", drag.transform, "1");
+            oneColumn.transform.SetRect(0f, 0f, 0f, 1f, 440f, 0f, 480f, 20f);
+            oneColumn.onClick.AddListener(() => setColums(1));
+
+            var twoColumn = UIUtility.CreateButton("twoColumn", drag.transform, "2");
+            twoColumn.transform.SetRect(0f, 0f, 0f, 1f, 480f, 0f, 520f, 20f);
+            twoColumn.onClick.AddListener(() => setColums(2));
 
             var loadingPanel = UIUtility.CreatePanel("LoadingIconPanel", drag.transform);
-            loadingPanel.transform.SetRect(0f, 0f, 0f, 1f, 340f, 0f, 340f + headerSize);
+            loadingPanel.transform.SetRect(0f, 0f, 0f, 1f, 380f, 0f, 380f + headerSize);
             loadingPanel.color = new Color(0f, 0f, 0f, 0f);
             var loadingIcon = UIUtility.CreatePanel("LoadingIcon", loadingPanel.transform);
             loadingIcon.transform.SetRect(0.1f, 0.1f, 0.9f, 0.9f);
@@ -191,6 +201,11 @@ namespace BetterSceneLoader
             nobutton = UIUtility.CreateButton("NoButton", confirmpanel.transform, "N");
             nobutton.transform.SetRect(0.5f, 0f, 1f, 1f);
             nobutton.onClick.AddListener(() => confirmpanel.gameObject.SetActive(false));
+            
+            fileNameText = UIUtility.CreateText("FileNameText", optionspanel.transform, "filename");
+            fileNameText.color = Color.red;
+            fileNameText.transform.SetRect(0.05f, 5.2f, 0.95f, 6.6f);
+            fileNameText.alignment = TextAnchor.MiddleCenter;
 
             var loadbutton = UIUtility.CreateButton("LoadButton", optionspanel.transform, "Load");
             loadbutton.transform.SetRect(0f, 0f, 0.3f, 1f);
@@ -305,9 +320,9 @@ namespace BetterSceneLoader
             }
             else
             {
-                List<KeyValuePair<DateTime, string>> scenefiles = (from s in Directory.GetFiles(GetCategoryFolder(), "*.png") select new KeyValuePair<DateTime, string>(File.GetLastWriteTime(s), s)).ToList();
-                scenefiles.Sort((KeyValuePair<DateTime, string> a, KeyValuePair<DateTime, string> b) => b.Key.CompareTo(a.Key));
-
+                List<KeyValuePair<DateTime, string>> scenefiles = (from s in Directory.GetFiles(GetCategoryFolder(), "*.png") select new KeyValuePair<DateTime, string> (File.GetLastWriteTime(s), s)).ToList();
+                scenefiles.Sort((KeyValuePair<DateTime, string> a, KeyValuePair<DateTime, string> b) => StrCmpLogicalW(b.Value, a.Value));
+                
                 var container = UIUtility.CreatePanel("GridContainer", imagelist.content.transform);
                 container.transform.SetRect(0f, 0f, 1f, 1f);
                 container.gameObject.AddComponent<ContentSizeFitter>().verticalFit = ContentSizeFitter.FitMode.PreferredSize;
@@ -325,16 +340,24 @@ namespace BetterSceneLoader
         IEnumerator LoadButtonsAsync(Transform parent, List<KeyValuePair<DateTime, string>> scenefiles)
         {
             string categoryText = category.captionText.text;
-
+            string sceneFilePath = "";
             foreach(var scene in scenefiles)
             {
+                sceneFilePath = scene.Value;
+
+                // Mod Orginizer fix
+                if (!File.Exists(sceneFilePath))
+                    sceneFilePath = sceneFilePath.Replace("data/UserData/", "MOHS/overwrite/UserData/").Replace("Data/UserData/", "MOHS/overwrite/UserData/");
+
                 LoadingIcon.loadingState[categoryText] = true;
 
-                using(WWW www = new WWW("file:///" + scene.Value))
+                //Console.WriteLine("URL 1:" + scene.Value);
+                using (WWW www = new WWW("file:///" + sceneFilePath))
                 {
+                    //Console.WriteLine("URL 2:"+scene.Value);
                     yield return www;
                     if(!string.IsNullOrEmpty(www.error)) throw new Exception(www.error);
-                    CreateSceneButton(parent, PngAssist.ChangeTextureFromByte(www.bytes), scene.Value);
+                    CreateSceneButton(parent, PngAssist.ChangeTextureFromByte(www.bytes), sceneFilePath);
                 }
             }
 
@@ -351,6 +374,7 @@ namespace BetterSceneLoader
 
                 if(optionspanel.transform.parent != button.transform)
                 {
+                    fileNameText.text = currentPath.Substring(currentPath.LastIndexOf("/") + 1).Replace(".png", "");
                     optionspanel.transform.SetParent(button.transform);
                     optionspanel.transform.SetRect(0f, 0f, 1f, 0.15f);
                     optionspanel.gameObject.SetActive(true);
@@ -381,5 +405,95 @@ namespace BetterSceneLoader
 
             return scenePath;
         }
+
+        void openFolder() {
+            string path = GetCategoryFolder();
+
+            path = path.Replace("data\\UserData\\", "MOHS\\overwrite\\UserData\\").Replace("Data\\UserData\\", "MOHS\\overwrite\\UserData\\");
+            path = path.Replace("data/UserData/", "MOHS/overwrite/UserData/").Replace("Data/UserData/", "MOHS/overwrite/UserData/");
+            Process.Start(path);
+        }
+
+        void setColums(int columsNum) {
+            columnCount = columsNum;
+            UpdateWindow();
+            return;
+        }
+
+        public static int StrCmpLogicalW(string x, string y)
+        {
+            if (x != null && y != null)
+            {
+                int xIndex = 0;
+                int yIndex = 0;
+
+                while (xIndex < x.Length)
+                {
+                    if (yIndex >= y.Length)
+                        return 1;
+
+                    if (char.IsDigit(x[xIndex]))
+                    {
+                        if (!char.IsDigit(y[yIndex]))
+                            return -1;
+
+                        // Compare the numbers
+                        List<char> xText = new List<char>();
+                        List<char> yText = new List<char>();
+
+                        for (int i = xIndex; i < x.Length; i++)
+                        {
+                            var xChar = x[i];
+
+                            if (char.IsDigit(xChar))
+                                xText.Add(xChar);
+                            else
+                                break;
+                        }
+
+                        for (int j = yIndex; j < y.Length; j++)
+                        {
+                            var yChar = y[j];
+
+                            if (char.IsDigit(yChar))
+                                yText.Add(yChar);
+                            else
+                                break;
+                        }
+
+                        int xValue = Convert.ToInt32(new string(xText.ToArray()));
+                        int yValue = Convert.ToInt32(new string(yText.ToArray()));
+
+                        if (xValue < yValue)
+                            return -1;
+                        else if (xValue > yValue)
+                            return 1;
+
+                        // Skip
+                        xIndex += xText.Count;
+                        yIndex += yText.Count;
+                    }
+                    else if (char.IsDigit(y[yIndex]))
+                        return 1;
+                    else
+                    {
+                        int difference = char.ToUpperInvariant(x[xIndex]).CompareTo(char.ToUpperInvariant(y[yIndex]));
+                        if (difference > 0)
+                            return 1;
+                        else if (difference < 0)
+                            return -1;
+
+                        xIndex++;
+                        yIndex++;
+                    }
+                }
+
+                if (yIndex < y.Length)
+                    return -1;
+            }
+
+            return 0;
+        }
+
     }
 }
