@@ -40,9 +40,12 @@ namespace BetterSceneLoader
         ScrollRect imagelist;
         Image optionspanel;
         Image confirmpanel;
+        Image confirmpanel2;
         Text fileNameText;
         Button yesbutton;
         Button nobutton;
+        Button yesbutton2;
+        Button nobutton2;
         Text nametext;
 
         int columnCount;
@@ -53,7 +56,7 @@ namespace BetterSceneLoader
 
         Dictionary<string, Image> sceneCache = new Dictionary<string, Image>();
         Button currentButton;
-        string currentPath;
+        string currentPath = "";
 
         void Awake()
         {
@@ -194,22 +197,52 @@ namespace BetterSceneLoader
             confirmpanel = UIUtility.CreatePanel("ConfirmPanel", imagelist.transform);
             confirmpanel.gameObject.SetActive(false);
 
+            var confirmPanelText = UIUtility.CreateText("confirmPanelText", confirmpanel.transform, "confirmText");
+            confirmPanelText.text = "Delete scene?";
+            confirmPanelText.color = Color.red;
+            confirmPanelText.fontStyle = FontStyle.Bold;
+            confirmPanelText.transform.SetRect(-1f, 1f, 2f, 2f);
+            confirmPanelText.alignment = TextAnchor.MiddleCenter;
+
             yesbutton = UIUtility.CreateButton("YesButton", confirmpanel.transform, "Y");
             yesbutton.transform.SetRect(0f, 0f, 0.5f, 1f);
             yesbutton.onClick.AddListener(() => DeleteScene(currentPath));
 
             nobutton = UIUtility.CreateButton("NoButton", confirmpanel.transform, "N");
             nobutton.transform.SetRect(0.5f, 0f, 1f, 1f);
-            nobutton.onClick.AddListener(() => confirmpanel.gameObject.SetActive(false));
-            
+            nobutton.onClick.AddListener(() => { confirmpanel.gameObject.SetActive(false); confirmpanel2.gameObject.SetActive(false); });
+
+            confirmpanel2 = UIUtility.CreatePanel("ConfirmPanel2", imagelist.transform);
+            confirmpanel2.gameObject.SetActive(false);
+
+            var confirmPanelText2 = UIUtility.CreateText("confirmPanelText2", confirmpanel2.transform, "confirmText2");
+            confirmPanelText2.text = "ReSave scene?";
+            confirmPanelText2.color = Color.magenta;
+            confirmPanelText2.fontStyle = FontStyle.Bold;
+            confirmPanelText2.transform.SetRect(-1f, 1f, 2f, 2f);
+            confirmPanelText2.alignment = TextAnchor.MiddleCenter;
+
+            yesbutton2 = UIUtility.CreateButton("YesButton2", confirmpanel2.transform, "Y");
+            yesbutton2.transform.SetRect(0f, 0f, 0.5f, 1f);
+            yesbutton2.onClick.AddListener(() => { SaveScene(currentPath); ReloadImages(); });
+
+            nobutton2 = UIUtility.CreateButton("NoButton2", confirmpanel2.transform, "N");
+            nobutton2.transform.SetRect(0.5f, 0f, 1f, 1f);
+            nobutton2.onClick.AddListener(() => { confirmpanel.gameObject.SetActive(false); confirmpanel2.gameObject.SetActive(false); });
+
             fileNameText = UIUtility.CreateText("FileNameText", optionspanel.transform, "filename");
             fileNameText.color = Color.red;
             fileNameText.transform.SetRect(0.05f, 5.2f, 0.95f, 6.6f);
             fileNameText.alignment = TextAnchor.MiddleCenter;
 
+            var resavebutton = UIUtility.CreateButton("ReSaveButton", optionspanel.transform, "ReSave");
+            resavebutton.transform.SetRect(0.68f, 4f, 0.98f, 5f);
+            resavebutton.onClick.AddListener(() => { confirmpanel.gameObject.SetActive(false); confirmpanel2.gameObject.SetActive(true); });
+
             var loadbutton = UIUtility.CreateButton("LoadButton", optionspanel.transform, "Load");
             loadbutton.transform.SetRect(0f, 0f, 0.3f, 1f);
             loadbutton.onClick.AddListener(() => LoadScene(currentPath));
+
 
             var importbutton = UIUtility.CreateButton("ImportButton", optionspanel.transform, "Import");
             importbutton.transform.SetRect(0.35f, 0f, 0.65f, 1f);
@@ -217,7 +250,7 @@ namespace BetterSceneLoader
 
             var deletebutton = UIUtility.CreateButton("DeleteButton", optionspanel.transform, "Delete");
             deletebutton.transform.SetRect(0.7f, 0f, 1f, 1f);
-            deletebutton.onClick.AddListener(() => confirmpanel.gameObject.SetActive(true));
+            deletebutton.onClick.AddListener(() => { confirmpanel.gameObject.SetActive(true); confirmpanel2.gameObject.SetActive(false); });
 
             PopulateGrid();
         }
@@ -252,6 +285,7 @@ namespace BetterSceneLoader
         void LoadScene(string path)
         {
             confirmpanel.gameObject.SetActive(false);
+            confirmpanel2.gameObject.SetActive(false);
             optionspanel.gameObject.SetActive(false);
             Utils.InvokePluginMethod("LockOnPlugin.LockOnBase", "ResetModState");
             Studio.Studio.Instance.LoadScene(path);
@@ -266,11 +300,17 @@ namespace BetterSceneLoader
             Utils.InvokePluginMethod("HSStudioNEOExtSave.StudioNEOExtendSaveMgr", "LoadExtDataRaw", path);
         }
 
-        void SaveScene()
+        void SaveScene(string filepath = "")
         {
             Studio.Studio.Instance.dicObjectCtrl.Values.ToList().ForEach(x => x.OnSavePreprocessing());
             Studio.Studio.Instance.sceneInfo.cameraSaveData = Studio.Studio.Instance.cameraCtrl.Export();
-            string path = GetCategoryFolder() + DateTime.Now.ToString("yyyy_MMdd_HHmm_ss_fff") + ".png";
+            string path = "";
+            if (filepath == "")
+                path += GetCategoryFolder() + DateTime.Now.ToString("yyyy_MMdd_HHmm_ss_fff") + ".png";
+            else
+                path = filepath;
+            if (File.Exists(path))
+                File.Delete(path);
             Studio.Studio.Instance.sceneInfo.Save(path);
             if(useExternalSavedata)
             {
@@ -287,6 +327,7 @@ namespace BetterSceneLoader
             File.Delete(path);
             currentButton.gameObject.SetActive(false);
             confirmpanel.gameObject.SetActive(false);
+            confirmpanel2.gameObject.SetActive(false);
             optionspanel.gameObject.SetActive(false);
         }
 
@@ -294,6 +335,7 @@ namespace BetterSceneLoader
         {
             Studio.Studio.Instance.ImportScene(path);
             confirmpanel.gameObject.SetActive(false);
+            confirmpanel2.gameObject.SetActive(false);
             optionspanel.gameObject.SetActive(false);
         }
 
@@ -301,8 +343,10 @@ namespace BetterSceneLoader
         {
             optionspanel.transform.SetParent(imagelist.transform);
             confirmpanel.transform.SetParent(imagelist.transform);
+            confirmpanel2.transform.SetParent(imagelist.transform);
             optionspanel.gameObject.SetActive(false);
             confirmpanel.gameObject.SetActive(false);
+            confirmpanel2.gameObject.SetActive(false);
 
             Destroy(imagelist.content.GetComponentInChildren<Image>().gameObject);
             imagelist.content.anchoredPosition = new Vector2(0f, 0f);
@@ -381,6 +425,8 @@ namespace BetterSceneLoader
 
                     confirmpanel.transform.SetParent(button.transform);
                     confirmpanel.transform.SetRect(0.4f, 0.4f, 0.6f, 0.6f);
+                    confirmpanel2.transform.SetParent(button.transform);
+                    confirmpanel2.transform.SetRect(0.4f, 0.4f, 0.6f, 0.6f);
                 }
                 else
                 {
@@ -388,6 +434,7 @@ namespace BetterSceneLoader
                 }
 
                 confirmpanel.gameObject.SetActive(false);
+                confirmpanel2.gameObject.SetActive(false);
             });
             
             var sprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), new Vector2(0.5f, 0.5f));
