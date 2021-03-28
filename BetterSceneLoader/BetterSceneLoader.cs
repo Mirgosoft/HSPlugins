@@ -133,7 +133,7 @@ namespace BetterSceneLoader
             UIUtility.MakeObjectDraggable(drag.rectTransform, mainPanel.rectTransform);
 
             nametext = UIUtility.CreateText("Nametext", drag.transform, "Scenes");
-            nametext.transform.SetRect(0f, 0f, 1f, 1f, 340f, 0f, -buttonSize * 2f);
+            nametext.transform.SetRect(0.87f, 0f, 0.98f, 1f, 340f, 0f, -buttonSize * 2f);
             nametext.alignment = TextAnchor.MiddleCenter;
 
             var close = UIUtility.CreateButton("CloseButton", drag.transform, "");
@@ -142,35 +142,39 @@ namespace BetterSceneLoader
             Utils.AddCloseSymbol(close);
             
             category = UIUtility.CreateDropdown("Dropdown", drag.transform, "Categories");
-            category.transform.SetRect(0f, 0f, 0f, 1f, 0f, 0f, 140f);
+            category.transform.SetRect(0f, 0f, 0f, 1f, 0f, 0f, 200f);
             category.captionText.transform.SetRect(0f, 0f, 1f, 1f, 0f, 2f, -15f, -2f);
             category.captionText.alignment = TextAnchor.MiddleCenter;
-            category.options = GetCategories();
             category.onValueChanged.AddListener((x) =>
             {
                 imagelist.content.GetComponentInChildren<Image>().gameObject.SetActive(false);
                 imagelist.content.anchoredPosition = new Vector2(0f, 0f);
                 PopulateGrid();
             });
+            // Увеличиваем область выпадающего списка и чувствительность скролла.
+            ScrollRect categoryListRect = category.transform.Find("Template").GetComponent<ScrollRect>();
+            categoryListRect.scrollSensitivity = 45f;
+            categoryListRect.transform.SetRect(0f,0f,1f,1f, 0f, -330f, 0f, 0f);
+            GetCategories();
 
             var refresh = UIUtility.CreateButton("RefreshButton", drag.transform, "Refresh");
-            refresh.transform.SetRect(0f, 0f, 0f, 1f, 140f, 0f, 220f);
+            refresh.transform.SetRect(0f, 0f, 0f, 1f, 200f, 0f, 280f);
             refresh.onClick.AddListener(() => ReloadImages());
 
             var save = UIUtility.CreateButton("SaveButton", drag.transform, "Save");
-            save.transform.SetRect(0f, 0f, 0f, 1f, 220f, 0f, 300f, 20f);
+            save.transform.SetRect(0f, 0f, 0f, 1f, 280f, 0f, 360f, 20f);
             save.onClick.AddListener(() => SaveScene());
 
             var folder = UIUtility.CreateButton("FolderButton", drag.transform, "Folder");
-            folder.transform.SetRect(0f, 0f, 0f, 1f, 300f, 0f, 380f);
+            folder.transform.SetRect(0f, 0f, 0f, 1f, 360f, 0f, 440f);
             folder.onClick.AddListener(() => openFolder());
             
             var oneColumn = UIUtility.CreateButton("oneColumn", drag.transform, "1");
-            oneColumn.transform.SetRect(0f, 0f, 0f, 1f, 440f, 0f, 480f, 20f);
+            oneColumn.transform.SetRect(0f, 0f, 0f, 1f, 450f, 0f, 490f, 20f);
             oneColumn.onClick.AddListener(() => setColums(1));
 
             var twoColumn = UIUtility.CreateButton("twoColumn", drag.transform, "2");
-            twoColumn.transform.SetRect(0f, 0f, 0f, 1f, 480f, 0f, 520f, 20f);
+            twoColumn.transform.SetRect(0f, 0f, 0f, 1f, 490f, 0f, 530f, 20f);
             twoColumn.onClick.AddListener(() => setColums(2));
 
             var loadingPanel = UIUtility.CreatePanel("LoadingIconPanel", drag.transform);
@@ -255,7 +259,7 @@ namespace BetterSceneLoader
             PopulateGrid();
         }
 
-        List<Dropdown.OptionData> GetCategories()
+        private void GetCategories()
         {
             if(!File.Exists(scenePath)) Directory.CreateDirectory(scenePath);
             var folders = Directory.GetDirectories(scenePath);
@@ -279,7 +283,7 @@ namespace BetterSceneLoader
             }
             
             var sorted = folders.Select(x => Path.GetFileName(x)).OrderBy(x => order.Contains(x) ? Array.IndexOf(order, x) : order.Length);
-            return sorted.Select(x => new Dropdown.OptionData(x)).ToList();
+            category.options = sorted.Select(x => new Dropdown.OptionData(x)).ToList();
         }
 
         void LoadScene(string path)
@@ -302,11 +306,17 @@ namespace BetterSceneLoader
 
         void SaveScene(string filepath = "")
         {
+            string category_path = GetCategoryFolder();
+            if (!Directory.Exists(category_path)) {
+                GetCategories();
+                return;
+            }
+
             Studio.Studio.Instance.dicObjectCtrl.Values.ToList().ForEach(x => x.OnSavePreprocessing());
             Studio.Studio.Instance.sceneInfo.cameraSaveData = Studio.Studio.Instance.cameraCtrl.Export();
             string path = "";
             if (filepath == "")
-                path += GetCategoryFolder() + DateTime.Now.ToString("yyyy_MMdd_HHmm_ss_fff") + ".png";
+                path += category_path + DateTime.Now.ToString("yyyy_MMdd_HHmm_ss_fff") + ".png";
             else
                 path = filepath;
             if (File.Exists(path))
@@ -364,7 +374,11 @@ namespace BetterSceneLoader
             }
             else
             {
-                List<KeyValuePair<DateTime, string>> scenefiles = (from s in Directory.GetFiles(GetCategoryFolder(), "*.png") select new KeyValuePair<DateTime, string> (File.GetLastWriteTime(s), s)).ToList();
+                List<KeyValuePair<DateTime, string>> scenefiles = new List<KeyValuePair<DateTime, string>>();
+
+                string category_path = GetCategoryFolder();
+                if (Directory.Exists(category_path))
+                    scenefiles = (from s in Directory.GetFiles(category_path, "*.png") select new KeyValuePair<DateTime, string> (File.GetLastWriteTime(s), s)).ToList();
                 scenefiles.Sort((KeyValuePair<DateTime, string> a, KeyValuePair<DateTime, string> b) => StrCmpLogicalW(b.Value, a.Value));
                 
                 var container = UIUtility.CreatePanel("GridContainer", imagelist.content.transform);
@@ -391,7 +405,7 @@ namespace BetterSceneLoader
 
                 // Mod Orginizer fix
                 if (!File.Exists(sceneFilePath))
-                    sceneFilePath = sceneFilePath.Replace("data/UserData/", "MOHS/overwrite/UserData/").Replace("Data/UserData/", "MOHS/overwrite/UserData/");
+                    sceneFilePath = ModOrginizerPathFix(sceneFilePath);
 
                 LoadingIcon.loadingState[categoryText] = true;
 
@@ -447,7 +461,7 @@ namespace BetterSceneLoader
         {
             if(category?.captionText?.text != null)
             {
-                return scenePath + category.captionText.text + "/";
+                return ModOrginizerPathFix(scenePath + category.captionText.text + "/");
             }
 
             return scenePath;
@@ -456,8 +470,11 @@ namespace BetterSceneLoader
         void openFolder() {
             string path = GetCategoryFolder();
 
-            path = path.Replace("data\\UserData\\", "MOHS\\overwrite\\UserData\\").Replace("Data\\UserData\\", "MOHS\\overwrite\\UserData\\");
-            path = path.Replace("data/UserData/", "MOHS/overwrite/UserData/").Replace("Data/UserData/", "MOHS/overwrite/UserData/");
+            path = ModOrginizerPathFix(path);
+            if (!Directory.Exists(path)) {
+                GetCategories();
+                return;
+            }
             Process.Start(path);
         }
 
@@ -542,5 +559,10 @@ namespace BetterSceneLoader
             return 0;
         }
 
+        private static string ModOrginizerPathFix(string path) {
+            path = path.Replace("data\\UserData\\", "MOHS\\overwrite\\UserData\\").Replace("Data\\UserData\\", "MOHS\\overwrite\\UserData\\");
+            path = path.Replace("data/UserData/", "MOHS/overwrite/UserData/").Replace("Data/UserData/", "MOHS/overwrite/UserData/");
+            return path;
+        }
     }
 }
