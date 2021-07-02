@@ -162,20 +162,8 @@ namespace BetterSceneLoader
             refresh.onClick.AddListener(() => ReloadImages());
 
             var save = UIUtility.CreateButton("SaveButton", drag.transform, "Save");
-            save.transform.SetRect(0f, 0f, 0f, 1f, 280f, 0f, 360f, 20f);
+            save.transform.SetRect(0f, 0f, 0f, 1f, 280f, 0f, 360f, 15f);
             save.onClick.AddListener(() => SaveScene());
-
-            var folder = UIUtility.CreateButton("FolderButton", drag.transform, "Folder");
-            folder.transform.SetRect(0f, 0f, 0f, 1f, 360f, 0f, 440f);
-            folder.onClick.AddListener(() => openFolder());
-            
-            var oneColumn = UIUtility.CreateButton("oneColumn", drag.transform, "1");
-            oneColumn.transform.SetRect(0f, 0f, 0f, 1f, 450f, 0f, 490f, 20f);
-            oneColumn.onClick.AddListener(() => setColums(1));
-
-            var twoColumn = UIUtility.CreateButton("twoColumn", drag.transform, "2");
-            twoColumn.transform.SetRect(0f, 0f, 0f, 1f, 490f, 0f, 530f, 20f);
-            twoColumn.onClick.AddListener(() => setColums(2));
 
             var loadingPanel = UIUtility.CreatePanel("LoadingIconPanel", drag.transform);
             loadingPanel.transform.SetRect(0f, 0f, 0f, 1f, 380f, 0f, 380f + headerSize);
@@ -185,6 +173,18 @@ namespace BetterSceneLoader
             var texture = Utils.LoadTexture(Properties.Resources.loadicon);
             loadingIcon.sprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), new Vector2(0.5f, 0.5f));
             LoadingIcon.Init(loadingIcon, -5f);
+
+            var folder = UIUtility.CreateButton("FolderButton", drag.transform, "Folder");
+            folder.transform.SetRect(0f, 0f, 0f, 1f, 360f, 0f, 440f);
+            folder.onClick.AddListener(() => openFolder());
+            
+            var oneColumn = UIUtility.CreateButton("oneColumn", drag.transform, "1");
+            oneColumn.transform.SetRect(0f, 0f, 0f, 1f, 450f, 0f, 470f, 0f);
+            oneColumn.onClick.AddListener(() => setColums(1));
+
+            var twoColumn = UIUtility.CreateButton("twoColumn", drag.transform, "2");
+            twoColumn.transform.SetRect(0f, 0f, 0f, 1f, 470f, 0f, 490f, 0f);
+            twoColumn.onClick.AddListener(() => setColums(2));
 
             imagelist = UIUtility.CreateScrollView("Imagelist", mainPanel.transform);
             imagelist.transform.SetRect(0f, 0f, 1f, 1f, marginSize, marginSize, -marginSize, -headerSize - marginSize / 2f);
