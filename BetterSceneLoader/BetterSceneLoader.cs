@@ -39,6 +39,8 @@ namespace BetterSceneLoader
         Dropdown category;
         ScrollRect imagelist;
         Image optionspanel;
+        Image lastLoadedMark_Panel;
+        string lastLoadedMark_filePath = "";
         Image confirmpanel;
         Image confirmpanel2;
         Text fileNameText;
@@ -195,6 +197,16 @@ namespace BetterSceneLoader
             imagelist.viewport.offsetMax = new Vector2(scrollOffsetX, 0f);
             imagelist.movementType = ScrollRect.MovementType.Clamped;
 
+            lastLoadedMark_Panel = UIUtility.CreatePanel("lastLoadedMark_Panel", imagelist.transform);
+            lastLoadedMark_Panel.color = new Color(1f, .5f, 1f, 1f);
+            UIUtility.AddOutlineToObject(lastLoadedMark_Panel.transform, outlineColor);
+            lastLoadedMark_Panel.gameObject.SetActive(false);
+
+            var lastLoadedMark_Text = UIUtility.CreateText("confirmPanelText", lastLoadedMark_Panel.transform, "Current");
+            lastLoadedMark_Text.color = new Color(.1f, .1f, .1f, 1f);
+            lastLoadedMark_Text.transform.SetRect(.05f, .02f, .95f, .98f);
+            lastLoadedMark_Text.alignment = TextAnchor.MiddleCenter;
+
             optionspanel = UIUtility.CreatePanel("ButtonPanel", imagelist.transform);
             optionspanel.gameObject.SetActive(false);
 
@@ -234,9 +246,13 @@ namespace BetterSceneLoader
             nobutton2.transform.SetRect(0.5f, 0f, 1f, 1f);
             nobutton2.onClick.AddListener(() => { confirmpanel.gameObject.SetActive(false); confirmpanel2.gameObject.SetActive(false); });
 
-            fileNameText = UIUtility.CreateText("FileNameText", optionspanel.transform, "filename");
-            fileNameText.color = Color.red;
-            fileNameText.transform.SetRect(0.05f, 5.2f, 0.95f, 6.6f);
+            var filenamePanel = UIUtility.CreatePanel("filenamePanel", optionspanel.transform);
+            filenamePanel.color = new Color(0f, 0f, 0f, .8f);
+            filenamePanel.transform.SetRect(0f, 5.2f, 1f, 6.6f);
+
+            fileNameText = UIUtility.CreateText("FileNameText", filenamePanel.transform, "filename");
+            fileNameText.color = new Color(.95f, .95f, .95f, 1f);
+            fileNameText.transform.SetRect(0.05f, 0f, 0.95f, 1f);
             fileNameText.alignment = TextAnchor.MiddleCenter;
 
             var resavebutton = UIUtility.CreateButton("ReSaveButton", optionspanel.transform, "ReSave");
@@ -246,7 +262,6 @@ namespace BetterSceneLoader
             var loadbutton = UIUtility.CreateButton("LoadButton", optionspanel.transform, "Load");
             loadbutton.transform.SetRect(0f, 0f, 0.3f, 1f);
             loadbutton.onClick.AddListener(() => LoadScene(currentPath));
-
 
             var importbutton = UIUtility.CreateButton("ImportButton", optionspanel.transform, "Import");
             importbutton.transform.SetRect(0.35f, 0f, 0.65f, 1f);
@@ -291,10 +306,13 @@ namespace BetterSceneLoader
             confirmpanel.gameObject.SetActive(false);
             confirmpanel2.gameObject.SetActive(false);
             optionspanel.gameObject.SetActive(false);
+            lastLoadedMark_filePath = path;
+            SetLastLoadedMarkParentObj(optionspanel.transform.parent, true);
             Utils.InvokePluginMethod("LockOnPlugin.LockOnBase", "ResetModState");
             Studio.Studio.Instance.LoadScene(path);
             if(useExternalSavedata) StartCoroutine(StudioNEOExtendSaveMgrLoad(path));
             if(autoClose) UISystem.gameObject.SetActive(false);
+
         }
 
         IEnumerator StudioNEOExtendSaveMgrLoad(string path)
@@ -329,6 +347,10 @@ namespace BetterSceneLoader
             }
 
             var button = CreateSceneButton(imagelist.content.GetComponentInChildren<Image>().transform, PngAssist.LoadTexture(path), path);
+
+            lastLoadedMark_filePath = path;
+            SetLastLoadedMarkParentObj(button.transform, true);
+
             button.transform.SetAsFirstSibling();
         }
 
@@ -339,6 +361,8 @@ namespace BetterSceneLoader
             confirmpanel.gameObject.SetActive(false);
             confirmpanel2.gameObject.SetActive(false);
             optionspanel.gameObject.SetActive(false);
+            if (lastLoadedMark_Panel.transform.parent == optionspanel.transform.parent) 
+                SetLastLoadedMarkParentObj(imagelist.transform, false);
         }
 
         void ImportScene(string path)
@@ -357,6 +381,7 @@ namespace BetterSceneLoader
             optionspanel.gameObject.SetActive(false);
             confirmpanel.gameObject.SetActive(false);
             confirmpanel2.gameObject.SetActive(false);
+            SetLastLoadedMarkParentObj(imagelist.transform, false);
 
             Destroy(imagelist.content.GetComponentInChildren<Image>().gameObject);
             imagelist.content.anchoredPosition = new Vector2(0f, 0f);
@@ -442,8 +467,7 @@ namespace BetterSceneLoader
                     confirmpanel2.transform.SetParent(button.transform);
                     confirmpanel2.transform.SetRect(0.4f, 0.4f, 0.6f, 0.6f);
                 }
-                else
-                {
+                else {
                     optionspanel.gameObject.SetActive(!optionspanel.gameObject.activeSelf);
                 }
 
@@ -453,6 +477,9 @@ namespace BetterSceneLoader
             
             var sprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), new Vector2(0.5f, 0.5f));
             button.gameObject.GetComponent<Image>().sprite = sprite;
+
+            if (path == lastLoadedMark_filePath)
+                SetLastLoadedMarkParentObj(button.transform, true);
 
             return button;
         }
@@ -563,6 +590,12 @@ namespace BetterSceneLoader
             path = path.Replace("data\\UserData\\", "MOHS\\overwrite\\UserData\\").Replace("Data\\UserData\\", "MOHS\\overwrite\\UserData\\");
             path = path.Replace("data/UserData/", "MOHS/overwrite/UserData/").Replace("Data/UserData/", "MOHS/overwrite/UserData/");
             return path;
+        }
+
+        void SetLastLoadedMarkParentObj(Transform transform, bool visible = true) {
+            lastLoadedMark_Panel.transform.SetParent(transform);
+            lastLoadedMark_Panel.gameObject.SetActive(visible);
+            lastLoadedMark_Panel.transform.SetRect(0f, .6f, .25f, .75f);
         }
     }
 }
