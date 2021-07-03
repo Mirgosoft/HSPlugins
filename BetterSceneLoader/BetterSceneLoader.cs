@@ -240,7 +240,7 @@ namespace BetterSceneLoader
 
             yesbutton2 = UIUtility.CreateButton("YesButton2", confirmpanel2.transform, "Y");
             yesbutton2.transform.SetRect(0f, 0f, 0.5f, 1f);
-            yesbutton2.onClick.AddListener(() => { SaveScene(currentPath); ReloadImages(); });
+            yesbutton2.onClick.AddListener(() => { StartCoroutine(ResaveScene()); });
 
             nobutton2 = UIUtility.CreateButton("NoButton2", confirmpanel2.transform, "N");
             nobutton2.transform.SetRect(0.5f, 0f, 1f, 1f);
@@ -322,7 +322,7 @@ namespace BetterSceneLoader
             Utils.InvokePluginMethod("HSStudioNEOExtSave.StudioNEOExtendSaveMgr", "LoadExtDataRaw", path);
         }
 
-        void SaveScene(string filepath = "")
+        void SaveScene(string filepath = "", bool resave = false)
         {
             string category_path = GetCategoryFolder();
             if (!Directory.Exists(category_path)) {
@@ -345,13 +345,13 @@ namespace BetterSceneLoader
                 Utils.InvokePluginMethod("HSStudioNEOExtSave.StudioNEOExtendSaveMgr", "SaveExtData", path);
                 //InvokePluginMethod("HSStudioNEOExtSave.StudioNEOExtendSaveMgr", "SaveExtDataRaw", path);
             }
-
-            var button = CreateSceneButton(imagelist.content.GetComponentInChildren<Image>().transform, PngAssist.LoadTexture(path), path);
-
-            lastLoadedMark_filePath = path;
-            SetLastLoadedMarkParentObj(button.transform, true);
-
-            button.transform.SetAsFirstSibling();
+            
+            if (!resave) {
+                var button = CreateSceneButton(imagelist.content.GetComponentInChildren<Image>().transform, PngAssist.LoadTexture(path), path);
+                button.transform.SetAsFirstSibling();
+                lastLoadedMark_filePath = path;
+                SetLastLoadedMarkParentObj(button.transform, true);
+            }
         }
 
         void DeleteScene(string path)
@@ -371,6 +371,30 @@ namespace BetterSceneLoader
             confirmpanel.gameObject.SetActive(false);
             confirmpanel2.gameObject.SetActive(false);
             optionspanel.gameObject.SetActive(false);
+        }
+
+        IEnumerator ResaveScene() {
+            SaveScene(currentPath, true); 
+            string file_path = currentPath; // (currentPath updated in onBtnClick event.)
+
+            Transform curr_btn_trans = optionspanel.transform.parent;
+
+            // Mod Orginizer fix
+            if (!File.Exists(file_path))
+                file_path = ModOrginizerPathFix(file_path);
+
+            using (WWW www = new WWW("file:///" + file_path)) {
+                yield return www;
+                if (!string.IsNullOrEmpty(www.error)) throw new Exception(www.error);
+                Texture2D texture = PngAssist.ChangeTextureFromByte(www.bytes);
+                var sprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), new Vector2(0.5f, 0.5f));
+                curr_btn_trans.gameObject.GetComponent<Image>().sprite = sprite;
+            }
+
+            optionspanel.gameObject.SetActive(false);
+            confirmpanel.gameObject.SetActive(false);
+            confirmpanel2.gameObject.SetActive(false);
+            SetLastLoadedMarkParentObj(curr_btn_trans, true);
         }
 
         void ReloadImages()
