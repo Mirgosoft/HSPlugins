@@ -383,6 +383,11 @@ namespace BetterSceneLoader
             if (!File.Exists(file_path))
                 file_path = ModOrginizerPathFix(file_path);
 
+            Color orig_color = curr_btn_trans.gameObject.GetComponent<Image>().color;
+            curr_btn_trans.gameObject.GetComponent<Image>().color = new Color(0f, 0f, 0f, 1f);
+            yield return new WaitForSeconds(0.15f);
+            curr_btn_trans.gameObject.GetComponent<Image>().color = orig_color;
+
             using (WWW www = new WWW("file:///" + file_path)) {
                 yield return www;
                 if (!string.IsNullOrEmpty(www.error)) throw new Exception(www.error);
