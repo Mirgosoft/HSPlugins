@@ -30,6 +30,8 @@ namespace BetterSceneLoader
         float windowMarginX = 45f;
         float windowMarginY = 35f;
 
+        bool bSavingInProgress = false;
+
         Color dragColor = new Color(0.4f, 0.4f, 0.4f, 1f);
         Color backgroundColor = new Color(1f, 1f, 1f, 1f);
         Color outlineColor = new Color(0f, 0f, 0f, 1f);
@@ -324,11 +326,14 @@ namespace BetterSceneLoader
 
         void SaveScene(string filepath = "", bool resave = false)
         {
+            if (bSavingInProgress)
+                return;
             string category_path = GetCategoryFolder();
             if (!Directory.Exists(category_path)) {
                 GetCategories();
                 return;
             }
+            bSavingInProgress = true;
 
             Studio.Studio.Instance.dicObjectCtrl.Values.ToList().ForEach(x => x.OnSavePreprocessing());
             Studio.Studio.Instance.sceneInfo.cameraSaveData = Studio.Studio.Instance.cameraCtrl.Export();
@@ -352,6 +357,8 @@ namespace BetterSceneLoader
                 lastLoadedMark_filePath = path;
                 SetLastLoadedMarkParentObj(button.transform, true);
             }
+
+            bSavingInProgress = false;
         }
 
         void DeleteScene(string path)
@@ -374,7 +381,11 @@ namespace BetterSceneLoader
         }
 
         IEnumerator ResaveScene() {
-            SaveScene(currentPath, true); 
+            if (bSavingInProgress)
+                yield break;
+            SaveScene(currentPath, true);
+            bSavingInProgress = true;
+
             string file_path = currentPath; // (currentPath updated in onBtnClick event.)
 
             Transform curr_btn_trans = optionspanel.transform.parent;
@@ -385,7 +396,7 @@ namespace BetterSceneLoader
 
             Color orig_color = curr_btn_trans.gameObject.GetComponent<Image>().color;
             curr_btn_trans.gameObject.GetComponent<Image>().color = new Color(0f, 0f, 0f, 1f);
-            yield return new WaitForSeconds(0.15f);
+            yield return new WaitForSeconds(0.3f);
             curr_btn_trans.gameObject.GetComponent<Image>().color = orig_color;
 
             using (WWW www = new WWW("file:///" + file_path)) {
@@ -394,6 +405,7 @@ namespace BetterSceneLoader
                 Texture2D texture = PngAssist.ChangeTextureFromByte(www.bytes);
                 var sprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), new Vector2(0.5f, 0.5f));
                 curr_btn_trans.gameObject.GetComponent<Image>().sprite = sprite;
+                bSavingInProgress = false;
             }
 
             optionspanel.gameObject.SetActive(false);
