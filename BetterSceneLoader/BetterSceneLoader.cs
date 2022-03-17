@@ -9,6 +9,7 @@ using IllusionPlugin;
 using System.IO;
 using System.Collections;
 using System.Diagnostics;
+using Studio;
 
 // imitate windows explorer thumbnail spacing and positioning for scene loader
 // reset hsstudioaddon lighting on load if no xml data
@@ -57,6 +58,9 @@ namespace BetterSceneLoader
         float scrollSensitivity;
         bool autoClose;
         bool smallWindow;
+        bool bClearPreviousSceneBeforeLoad = true;
+
+        static Transform rootTreeTrans = null;
 
         Dictionary<string, Image> sceneCache = new Dictionary<string, Image>();
         Button currentButton;
@@ -68,6 +72,16 @@ namespace BetterSceneLoader
             MakeBetterSceneLoader();
             LoadSettings();
             StartCoroutine(StartingScene());
+        }
+
+        void Start() {
+            // Дерево объектов на сцене для удаления перед загрузкой новой сцены.
+            rootTreeTrans = GameObject.Find("StudioScene/Canvas Object List/Image Bar/Scroll View/" +
+                "Viewport/Content")?.transform;
+            if (rootTreeTrans == null) {
+                UnityEngine.Debug.Log("Can't find the Objects tree!!!");
+                bClearPreviousSceneBeforeLoad = false;
+            }
         }
 
         IEnumerator StartingScene()
@@ -89,6 +103,7 @@ namespace BetterSceneLoader
             scrollSensitivity = ModPrefs.GetFloat("BetterSceneLoader", "ScrollSensitivity", 3f, true);
             autoClose = ModPrefs.GetBool("BetterSceneLoader", "AutoClose", true, true);
             smallWindow = ModPrefs.GetBool("BetterSceneLoader", "SmallWindow", true, true);
+            bClearPreviousSceneBeforeLoad = ModPrefs.GetBool("BetterSceneLoader", "bClearPreviousSceneBeforeLoad", true, true);
 
             UpdateWindow();
             return true;
@@ -263,7 +278,7 @@ namespace BetterSceneLoader
 
             var loadbutton = UIUtility.CreateButton("LoadButton", optionspanel.transform, "Load");
             loadbutton.transform.SetRect(0f, 0f, 0.3f, 1f);
-            loadbutton.onClick.AddListener(() => LoadScene(currentPath));
+            loadbutton.onClick.AddListener(() => StartCoroutine(LoadSceneOptimized(currentPath)));
 
             var importbutton = UIUtility.CreateButton("ImportButton", optionspanel.transform, "Import");
             importbutton.transform.SetRect(0.35f, 0f, 0.65f, 1f);
@@ -303,6 +318,16 @@ namespace BetterSceneLoader
             category.options = sorted.Select(x => new Dropdown.OptionData(x)).ToList();
         }
 
+        public IEnumerator<object> LoadSceneOptimized(string path) {
+            // Удаляем все объекты на текущей сцене, если нужно.
+            if (bClearPreviousSceneBeforeLoad) {
+                ClearScene();
+                yield return new WaitForSeconds(.05f);
+            }
+            // Загружаем новую сцену.
+            LoadScene(path);
+        }
+
         void LoadScene(string path)
         {
             confirmpanel.gameObject.SetActive(false);
@@ -315,6 +340,45 @@ namespace BetterSceneLoader
             if(useExternalSavedata) StartCoroutine(StudioNEOExtendSaveMgrLoad(path));
             if(autoClose) UISystem.gameObject.SetActive(false);
 
+        }
+
+        void ClearScene() {
+            int countObjects = rootTreeTrans.childCount;
+
+            Dictionary<TreeNodeObject, bool> objects_to_remove = new Dictionary<TreeNodeObject, bool>();
+            // Сначала все объекты добавляем к удалению.
+            TreeNodeObject objTreeNode;
+            ObjectCtrlInfo objInfo;
+            for (int i = 0; i < countObjects; i++) {
+                objTreeNode = rootTreeTrans.GetChild(i).GetComponent<TreeNodeObject>();
+                if (objTreeNode == null || !Studio.Studio.Instance.dicInfo.TryGetValue(objTreeNode, out objInfo))
+                    continue;
+                if (!objects_to_remove.ContainsKey(objTreeNode))
+                    objects_to_remove.Add(objTreeNode, true);
+            }
+
+            // Вычёркиваем из удаляемых дочерние, а также их родителей.
+            List<TreeNodeObject> temp_list = new List<TreeNodeObject>(); // Иначе удалять в цикле нельзя.
+            foreach (KeyValuePair<TreeNodeObject, bool> kvp in objects_to_remove)
+                temp_list.Add(kvp.Key);
+            foreach (TreeNodeObject tree_obj in temp_list) {
+                TreeNodeObject parent_obj = tree_obj.parent;
+                while (parent_obj != null) {
+                    if (Studio.Studio.Instance.treeNodeCtrl.selectNodes.Contains(parent_obj)) {
+                        if (objects_to_remove.ContainsKey(tree_obj))
+                            objects_to_remove.Remove(tree_obj);
+                        break;
+                    }
+                    parent_obj = parent_obj.parent;
+                }
+            }
+
+            // Удаляем оставшиеся.
+            foreach (KeyValuePair<TreeNodeObject, bool> kvp in objects_to_remove) {
+                kvp.Key.OnClickSelect();
+                // Имитируем нажатие на кнопку Удалить без подтверждения.
+                Singleton<Studio.WorkspaceCtrl>.Instance.OnClickDelete();
+            }
         }
 
         IEnumerator StudioNEOExtendSaveMgrLoad(string path)
