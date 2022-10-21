@@ -10,6 +10,7 @@ using System.IO;
 using System.Collections;
 using System.Diagnostics;
 using Studio;
+using System.Runtime.InteropServices;
 
 // imitate windows explorer thumbnail spacing and positioning for scene loader
 // reset hsstudioaddon lighting on load if no xml data
@@ -319,6 +320,8 @@ namespace BetterSceneLoader
         }
 
         public IEnumerator<object> LoadSceneOptimized(string path) {
+            if (path == "")
+                yield break;
             // Удаляем все объекты на текущей сцене, если нужно.
             if (bClearPreviousSceneBeforeLoad) {
                 ClearScene();
@@ -427,6 +430,8 @@ namespace BetterSceneLoader
 
         void DeleteScene(string path)
         {
+            if (path == "")
+                return;
             File.Delete(path);
             currentButton.gameObject.SetActive(false);
             confirmpanel.gameObject.SetActive(false);
@@ -438,6 +443,8 @@ namespace BetterSceneLoader
 
         void ImportScene(string path)
         {
+            if (path == "")
+                return;
             Studio.Studio.Instance.ImportScene(path);
             confirmpanel.gameObject.SetActive(false);
             confirmpanel2.gameObject.SetActive(false);
@@ -445,7 +452,7 @@ namespace BetterSceneLoader
         }
 
         IEnumerator ResaveScene() {
-            if (bSavingInProgress)
+            if (bSavingInProgress || currentPath == "")
                 yield break;
             SaveScene(currentPath, true);
             bSavingInProgress = true;
@@ -480,6 +487,7 @@ namespace BetterSceneLoader
 
         void ReloadImages()
         {
+            currentPath = "";
             optionspanel.transform.SetParent(imagelist.transform);
             confirmpanel.transform.SetParent(imagelist.transform);
             confirmpanel2.transform.SetParent(imagelist.transform);
@@ -560,7 +568,7 @@ namespace BetterSceneLoader
                 currentButton = button;
                 currentPath = path;
 
-                if(optionspanel.transform.parent != button.transform)
+                if (optionspanel.transform.parent != button.transform)
                 {
                     fileNameText.text = currentPath.Substring(currentPath.LastIndexOf("/") + 1).Replace(".png", "");
                     optionspanel.transform.SetParent(button.transform);
@@ -574,6 +582,8 @@ namespace BetterSceneLoader
                 }
                 else {
                     optionspanel.gameObject.SetActive(!optionspanel.gameObject.activeSelf);
+                    if (!optionspanel.gameObject.activeSelf)
+                        currentPath = "";
                 }
 
                 confirmpanel.gameObject.SetActive(false);
@@ -598,16 +608,24 @@ namespace BetterSceneLoader
 
             return scenePath;
         }
-
+        
         void openFolder() {
-            string path = GetCategoryFolder();
+            string folder_path = GetCategoryFolder();
 
-            path = ModOrginizerPathFix(path);
-            if (!Directory.Exists(path)) {
+            folder_path = ModOrginizerPathFix(folder_path);
+            UnityEngine.Debug.Log("Folder:  " + folder_path);
+            if (!Directory.Exists(folder_path)) {
                 GetCategories();
                 return;
             }
-            Process.Start(path);
+
+            // Select file in explorer, if selected file in current folder (category's folder).
+            if (currentPath != "" && File.Exists(currentPath) && currentPath.Contains(folder_path)) {
+                string filename = currentPath.Substring(currentPath.LastIndexOf("/") + 1);
+                OpenFolderAndSelectItem(folder_path.Replace("/", "\\"), filename);
+            }
+            else
+                Process.Start(folder_path);
         }
 
         void setColums(int columsNum) {
@@ -701,6 +719,38 @@ namespace BetterSceneLoader
             lastLoadedMark_Panel.transform.SetParent(transform);
             lastLoadedMark_Panel.gameObject.SetActive(visible);
             lastLoadedMark_Panel.transform.SetRect(0f, .6f, .25f, .75f);
+        }
+
+
+        // For the selecting file in opened folder (Ability to Re-use the same explorer process and the same window!!!).
+        [DllImport("shell32.dll", SetLastError = true)]
+        public static extern int SHOpenFolderAndSelectItems(IntPtr pidlFolder, uint cidl, [In, MarshalAs(UnmanagedType.LPArray)] IntPtr[] apidl, uint dwFlags);
+
+        [DllImport("shell32.dll", SetLastError = true)]
+        public static extern void SHParseDisplayName([MarshalAs(UnmanagedType.LPWStr)] string name, IntPtr bindingContext, [Out] out IntPtr pidl, uint sfgaoIn, [Out] out uint psfgaoOut);
+        public static void OpenFolderAndSelectItem(string folderPath, string file)
+        {
+            IntPtr nativeFolder;
+            uint psfgaoOut;
+            SHParseDisplayName(folderPath, IntPtr.Zero, out nativeFolder, 0, out psfgaoOut);
+
+            if (nativeFolder == IntPtr.Zero)
+                return; // Log error, can't find folder
+
+            IntPtr nativeFile;
+            SHParseDisplayName(Path.Combine(folderPath, file), IntPtr.Zero, out nativeFile, 0, out psfgaoOut);
+
+            IntPtr[] fileArray;
+            if (nativeFile == IntPtr.Zero)
+                fileArray = new IntPtr[0]; // Open the folder without the file selected if we can't find the file
+            else
+                fileArray = new IntPtr[] { nativeFile };
+
+            SHOpenFolderAndSelectItems(nativeFolder, (uint)fileArray.Length, fileArray, 0);
+
+            Marshal.FreeCoTaskMem(nativeFolder);
+            if (nativeFile != IntPtr.Zero)
+                Marshal.FreeCoTaskMem(nativeFile);
         }
     }
 }
