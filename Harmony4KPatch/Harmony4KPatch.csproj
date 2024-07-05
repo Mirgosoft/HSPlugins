@@ -35,27 +35,27 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="0Harmony">
-      <HintPath>..\..\..\BepInEx\core\0Harmony.dll</HintPath>
+      <HintPath>..\..\FlaminIKPoserHS\Dependencies\0Harmony.dll</HintPath>
     </Reference>
     <Reference Include="Assembly-CSharp">
-      <HintPath>..\..\..\StudioNEO_64_Data\Managed\Assembly-CSharp.dll</HintPath>
+      <HintPath>..\..\FlaminIKPoserHS\Dependencies\Assembly-CSharp.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="Assembly-CSharp-firstpass">
-      <HintPath>..\..\..\StudioNEO_64_Data\Managed\Assembly-CSharp-firstpass.dll</HintPath>
+      <HintPath>..\..\FlaminIKPoserHS\Dependencies\Assembly-CSharp-firstpass.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="IllusionPlugin">
-      <HintPath>..\..\IPA\IllusionInjector\bin\Debug\IllusionPlugin.dll</HintPath>
+      <HintPath>..\..\FlaminIKPoserHS\Dependencies\IllusionPlugin.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="System" />
     <Reference Include="UnityEngine">
-      <HintPath>..\..\..\StudioNEO_64_Data\Managed\UnityEngine.dll</HintPath>
+      <HintPath>..\..\FlaminIKPoserHS\Dependencies\UnityEngine.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="UnityEngine.UI">
-      <HintPath>..\..\..\StudioNEO_64_Data\Managed\UnityEngine.UI.dll</HintPath>
+      <HintPath>..\..\FlaminIKPoserHS\Dependencies\UnityEngine.UI.dll</HintPath>
       <Private>False</Private>
     </Reference>
   </ItemGroup>
