@@ -1,6 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="..\packages\MSBuild.ILMerge.Task.1.0.5\build\MSBuild.ILMerge.Task.props" Condition="Exists('..\packages\MSBuild.ILMerge.Task.1.0.5\build\MSBuild.ILMerge.Task.props')" />
+  <Import Project="..\packages\MSBuild.ILMerge.Task.1.1.3\build\MSBuild.ILMerge.Task.props" Condition="Exists('..\packages\MSBuild.ILMerge.Task.1.1.3\build\MSBuild.ILMerge.Task.props')" />
+  <Import Project="..\packages\ILMerge.3.0.41\build\ILMerge.props" Condition="Exists('..\packages\ILMerge.3.0.41\build\ILMerge.props')" />
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
@@ -28,7 +29,7 @@
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
-    <OutputPath>X:\RaBox_HS\Mods\BetterSceneLoader.v1.1.1\Plugins\</OutputPath>
+    <OutputPath>obj\Release\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
@@ -61,6 +62,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AutoGridLayout.cs" />
+    <Compile Include="Flamin.cs" />
     <Compile Include="BetterSceneLoader.cs" />
     <Compile Include="BetterSceneLoaderPlugin.cs" />
     <Compile Include="LoadingIcon.cs" />
@@ -94,27 +96,18 @@
   </ItemGroup>
   <Import Project="..\UIUtility\UIUtility.projitems" Label="Shared" />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <PropertyGroup>
+    <PostBuildEvent>copy /Y "$(TargetDir)$(TargetName)$(TargetExt)" "X:\RaBox_HS\Mods\BetterSceneLoader.v1.1.1\Plugins"</PostBuildEvent>
+  </PropertyGroup>
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>
-      <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
+      <ErrorText>Данный проект ссылается на пакеты NuGet, отсутствующие на этом компьютере. Используйте восстановление пакетов NuGet, чтобы скачать их.  Дополнительную информацию см. по адресу: http://go.microsoft.com/fwlink/?LinkID=322105. Отсутствует следующий файл: {0}.</ErrorText>
     </PropertyGroup>
-    <Error Condition="!Exists('..\packages\MSBuild.ILMerge.Task.1.0.5\build\MSBuild.ILMerge.Task.props')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\MSBuild.ILMerge.Task.1.0.5\build\MSBuild.ILMerge.Task.props'))" />
-    <Error Condition="!Exists('..\packages\MSBuild.ILMerge.Task.1.0.5\build\MSBuild.ILMerge.Task.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\MSBuild.ILMerge.Task.1.0.5\build\MSBuild.ILMerge.Task.targets'))" />
+    <Error Condition="!Exists('..\packages\ILMerge.3.0.41\build\ILMerge.props')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\ILMerge.3.0.41\build\ILMerge.props'))" />
+    <Error Condition="!Exists('..\packages\MSBuild.ILMerge.Task.1.1.3\build\MSBuild.ILMerge.Task.props')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\MSBuild.ILMerge.Task.1.1.3\build\MSBuild.ILMerge.Task.props'))" />
+    <Error Condition="!Exists('..\packages\MSBuild.ILMerge.Task.1.1.3\build\MSBuild.ILMerge.Task.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\MSBuild.ILMerge.Task.1.1.3\build\MSBuild.ILMerge.Task.targets'))" />
   </Target>
-  <Import Project="..\packages\MSBuild.ILMerge.Task.1.0.5\build\MSBuild.ILMerge.Task.targets" Condition="Exists('..\packages\MSBuild.ILMerge.Task.1.0.5\build\MSBuild.ILMerge.Task.targets')" />
-  <PropertyGroup>
-    <PostBuildEvent>exit
-SET ns=BetterSceneLoader
-SET cn=BetterSceneLoader
-
-cd "$(TargetDir)"
-cd..
-
-RenameAssembly.exe "$(TargetPath)"
-exit
-start MonoInjector64_Patched.exe -t StudioNEO_64.exe -d "$(TargetPath)" -n %25ns%25 -c %25cn%25 -m Bootstrap
-start MonoInjector64_Patched.exe -t HoneySelect_64.exe -d "$(TargetPath)" -n %25ns%25 -c %25cn%25 -m Bootstrap</PostBuildEvent>
-  </PropertyGroup>
+  <Import Project="..\packages\MSBuild.ILMerge.Task.1.1.3\build\MSBuild.ILMerge.Task.targets" Condition="Exists('..\packages\MSBuild.ILMerge.Task.1.1.3\build\MSBuild.ILMerge.Task.targets')" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">
@@ -122,9 +115,8 @@ start MonoInjector64_Patched.exe -t HoneySelect_64.exe -d "$(TargetPath)" -n %25
   <Target Name="AfterBuild">
   </Target>
   -->
-  <PropertyGroup> 
+  <PropertyGroup>
     <GenerateResourceMSBuildArchitecture>CurrentArchitecture</GenerateResourceMSBuildArchitecture>
     <GenerateResourceMSBuildRuntime>CurrentRuntime</GenerateResourceMSBuildRuntime>
   </PropertyGroup>
-
 </Project>

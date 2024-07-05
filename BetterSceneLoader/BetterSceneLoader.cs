@@ -21,7 +21,7 @@ namespace BetterSceneLoader
 {
     public class BetterSceneLoader : MonoBehaviour
     {
-        static string scenePath = Environment.CurrentDirectory + "/UserData/studioneo/BetterSceneLoader/";
+        public static string scenePath = Environment.CurrentDirectory + "/UserData/studioneo/BetterSceneLoader/";
         static string orderPath = scenePath + "order.txt";
 
         float buttonSize = 10f;
@@ -70,6 +70,7 @@ namespace BetterSceneLoader
         void Awake()
         {
             UIUtility.Init("BetterSceneLoader");
+            Flamin.Init();
             MakeBetterSceneLoader();
             LoadSettings();
             StartCoroutine(StartingScene());
@@ -402,6 +403,9 @@ namespace BetterSceneLoader
             }
             bSavingInProgress = true;
 
+            if (resave)
+                Flamin.BackupResavedSceneFile(filepath);
+
             Studio.Studio.Instance.dicObjectCtrl.Values.ToList().ForEach(x => x.OnSavePreprocessing());
             Studio.Studio.Instance.sceneInfo.cameraSaveData = Studio.Studio.Instance.cameraCtrl.Export();
             string path = "";
@@ -432,6 +436,7 @@ namespace BetterSceneLoader
         {
             if (path == "")
                 return;
+            Flamin.BackupResavedSceneFile(path, true);
             File.Delete(path);
             currentButton.gameObject.SetActive(false);
             confirmpanel.gameObject.SetActive(false);
@@ -463,7 +468,7 @@ namespace BetterSceneLoader
 
             // Mod Orginizer fix
             if (!File.Exists(file_path))
-                file_path = ModOrginizerPathFix(file_path);
+                file_path = Flamin.ModOrginizerPathFix(file_path);
 
             Color orig_color = curr_btn_trans.gameObject.GetComponent<Image>().color;
             curr_btn_trans.gameObject.GetComponent<Image>().color = new Color(0f, 0f, 0f, 1f);
@@ -543,7 +548,7 @@ namespace BetterSceneLoader
 
                 // Mod Orginizer fix
                 if (!File.Exists(sceneFilePath))
-                    sceneFilePath = ModOrginizerPathFix(sceneFilePath);
+                    sceneFilePath = Flamin.ModOrginizerPathFix(sceneFilePath);
 
                 LoadingIcon.loadingState[categoryText] = true;
 
@@ -603,7 +608,7 @@ namespace BetterSceneLoader
         {
             if(category?.captionText?.text != null)
             {
-                return ModOrginizerPathFix(scenePath + category.captionText.text + "/");
+                return Flamin.ModOrginizerPathFix(scenePath + category.captionText.text + "/");
             }
 
             return scenePath;
@@ -612,7 +617,7 @@ namespace BetterSceneLoader
         void openFolder() {
             string folder_path = GetCategoryFolder();
 
-            folder_path = ModOrginizerPathFix(folder_path);
+            folder_path = Flamin.ModOrginizerPathFix(folder_path);
             UnityEngine.Debug.Log("Folder:  " + folder_path);
             if (!Directory.Exists(folder_path)) {
                 GetCategories();
@@ -708,13 +713,7 @@ namespace BetterSceneLoader
 
             return 0;
         }
-
-        private static string ModOrginizerPathFix(string path) {
-            path = path.Replace("data\\UserData\\", "MOHS\\overwrite\\UserData\\").Replace("Data\\UserData\\", "MOHS\\overwrite\\UserData\\");
-            path = path.Replace("data/UserData/", "MOHS/overwrite/UserData/").Replace("Data/UserData/", "MOHS/overwrite/UserData/");
-            return path;
-        }
-
+        
         void SetLastLoadedMarkParentObj(Transform transform, bool visible = true) {
             lastLoadedMark_Panel.transform.SetParent(transform);
             lastLoadedMark_Panel.gameObject.SetActive(visible);
