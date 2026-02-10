@@ -97,7 +97,7 @@
   <Import Project="..\UIUtility\UIUtility.projitems" Label="Shared" />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>copy /Y "$(TargetDir)$(TargetName)$(TargetExt)" "X:\RaBox_HS\Mods\BetterSceneLoader.v1.1.1\Plugins"</PostBuildEvent>
+    <PostBuildEvent>copy /Y "$(TargetDir)$(TargetName)$(TargetExt)" "X:\RaBox_HS\MOHS\overwrite\Plugins"</PostBuildEvent>
   </PropertyGroup>
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>
